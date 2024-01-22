@@ -2,8 +2,6 @@
 
 const fs = require('fs');
 
-try {
-  console.log(fs.readFileSync(process.argv[2], 'utf-8'));
-} catch (err) {
-  console.error(err);
-}
+fs.readFile(process.argv[2], 'utf8', (err, data) => {
+    if (err) { console.log(err); } else { console.log(data); }
+    });

@@ -16,13 +16,13 @@ function countStudents(path) {
 
     students.forEach((student) => {
       const [firstname, , , field] = student.split(',').map((item) => item.trim());
-      if (fields[field]) {
+      if (Object.prototype.hasOwnProperty.call(fields, field)) {
         fields[field].push(firstname);
       }
     });
 
     for (const field in fields) {
-      if (fields.hasOwnProperty(field)) {
+      if (Object.prototype.hasOwnProperty.call(fields, field)) {
         const numberOfStudentsInField = fields[field].length;
         console.log(`Number of students in ${field}: ${numberOfStudentsInField}. List: ${fields[field].join(', ')}`);
       }

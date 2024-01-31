@@ -1,37 +1,36 @@
 const http = require('http');
+
+const args = process.argv.slice(2);
 const countStudents = require('./3-read_file_async');
 
-const db = process.argv[2];
+const DATABASE = args[0];
 
-const app = http.createServer((req, res) => {
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  if (req.url === '/') {
+const hostname = '127.0.0.1';
+const port = 1245;
+
+const app = http.createServer(async (req, res) => {
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'text/plain');
+
+  const { url } = req;
+
+  if (url === '/') {
     res.write('Hello Holberton School!');
-    res.end();
-  }
-
-  if (req.url === '/students') {
+  } else if (url === '/students') {
     res.write('This is the list of our students\n');
-    countStudents(db)
-      .then((result) => {
-        res.write(`${result.totalNumber}\n`);
-        res.write(`${result.CS}\n`);
-        res.write(`${result.SWE}`);
-        res.end();
-      })
-      .catch((error) => {
-        console.error('Error processing students data:', error);
-        res.write('Cannot load the database');
-        res.end();
-      });
+    try {
+      const students = await countStudents(DATABASE);
+      res.end(`${students.join('\n')}`);
+    } catch (error) {
+      res.end(error.message);
+    }
   }
+  res.statusCode = 404;
+  res.end();
 });
 
-const port = 1245;
-module.exports = app;
+app.listen(port, hostname, () => {
+  console.log(`Server running at http://${hostname}:${port}/`);
+});
 
-if (require.main === module) {
-  app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
-  });
-}
+module.exports = app;

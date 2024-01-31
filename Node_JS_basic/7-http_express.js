@@ -1,36 +1,24 @@
 const express = require('express');
-const fs = require('fs');
+const countStudents = require('./3-read_file_async');
 
 const app = express();
-const port = 1245;
 
 app.get('/', (req, res) => {
+  res.setHeader('Content-Type', 'text/plain');
   res.send('Hello Holberton School!');
 });
 
-app.get('/students', (req, res) => {
-  const database = process.argv[2];
-  let content = 'This is the list of our students\n';
-
-  fs.readFile(database, 'utf-8', (err, data) => {
-    if (err) {
-      content += 'Cannot load the database\n';
-    } else {
-      const lines = data.split('\n').filter((line) => line.trim() !== ''); // Filter out empty lines
-      const csStudents = lines.filter((line, index) => index > 0 && line.endsWith('CS')).map((line) => line.split(',')[0]);
-      const sweStudents = lines.filter((line, index) => index > 0 && line.endsWith('SWE')).map((line) => line.split(',')[0]);
-
-      content += `Number of students: ${lines.length - 1}\n`; // Exclude the header line
-      content += `Number of students in CS: ${csStudents.length}. List: ${csStudents.join(', ')}\n`;
-      content += `Number of students in SWE: ${sweStudents.length}. List: ${sweStudents.join(', ')}\n`;
-    }
-
-    res.send(content);
-  });
+app.get('/students', async (req, res) => {
+  res.setHeader('Content-Type', 'text/plain');
+  res.write('This is the list of our students\n');
+  try {
+    const data = await countStudents(process.argv[2]);
+    res.end(`${data.join('\n')}`);
+  } catch (error) {
+    res.end(error.message);
+  }
 });
 
-app.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
-});
+app.listen(1245);
 
 module.exports = app;

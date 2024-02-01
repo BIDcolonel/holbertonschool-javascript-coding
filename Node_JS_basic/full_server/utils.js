@@ -1,24 +1,32 @@
-import fs from 'fs';
+const fs = require('fs');
 
 function readDatabase(path) {
   return new Promise((resolve, reject) => {
-    fs.readFile(path, 'utf-8', (error, data) => {
-      if (error) {
-        reject(new Error('Cannot load the database'));
+    fs.readFile(path, 'utf8', (err, data) => {
+      if (err) {
+        reject(Error(err));
         return;
       }
-      const groupedByField = data
-      .split('\n')
-      .filter(Boolean)
-      .slice(1)
-      .reduce((acc, line) => {
-        const [firstname, lastname, age, field] = line.split(',');
-        acc[field] = [...(acc[field] || []), firstname];
-        return acc;
-      }, {});
-      resolve(groupedByField);
+      const content = data.toString().split('\n');
+
+      let students = content.filter((item) => item);
+
+      students = students.map((item) => item.split(','));
+
+      const fields = {};
+      for (const i in students) {
+        if (i !== 0) {
+          if (!fields[students[i][3]]) fields[students[i][3]] = [];
+
+          fields[students[i][3]].push(students[i][0]);
+        }
+      }
+
+      delete fields.field;
+
+      resolve(fields);
     });
   });
 }
 
-module.exports = readDatabase;
+export default readDatabase;

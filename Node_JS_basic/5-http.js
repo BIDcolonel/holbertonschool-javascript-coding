@@ -48,7 +48,7 @@ function countStudents(filepath) {
       })
       .catch((error) => {
         console.error('Error reading file:', error);
-        reject(new Error('Error: Cannot load the database'));
+        reject(new Error('Cannot load the database'));
       });
   });
 }
@@ -79,7 +79,7 @@ const app = http.createServer((req, res) => {
       })
       .catch((error) => {
         console.error('Error in countStudents:', error.message);
-        res.end('Error: Cannot load the database');
+        res.end('Cannot load the database');
       });
   }
 });

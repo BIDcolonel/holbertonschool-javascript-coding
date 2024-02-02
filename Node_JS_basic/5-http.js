@@ -1,36 +1,39 @@
 const http = require('http');
+const fs = require('fs');
 
-const args = process.argv.slice(2);
-const countStudents = require('./3-read_file_async');
+const app = http.createServer((req, res) => {
+  if (req.url === '/') {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('Hello Holberton School!');
+  } else if (req.url === '/students') {
+    const database = 'database.csv';
+    fs.readFile(database, 'utf8', (err, data) => {
+      if (err) {
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end('Internal Server Error');
+      } else {
+        const students = data.trim().split('\n').slice(1); // Exclude the header
+        const totalStudents = students.length;
 
-const DATABASE = args[0];
+        const csStudents = students.filter((student) => student.split(',')[3].trim() === 'CS');
+        const sweStudents = students.filter((student) => student.split(',')[3].trim() === 'SWE');
 
-const hostname = '127.0.0.1';
-const port = 1245;
+        const totalCsStudents = csStudents.length;
+        const totalSweStudents = sweStudents.length;
 
-const app = http.createServer(async (req, res) => {
-  res.statusCode = 200;
-  res.setHeader('Content-Type', 'text/plain');
+        const csStudentsList = csStudents.map((student) => student.split(',')[0].trim()).join(', ');
+        const sweStudentsList = sweStudents.map((student) => student.split(',')[0].trim()).join(', ');
 
-  const { url } = req;
-
-  if (url === '/') {
-    res.write('Hello Holberton School!');
-  } else if (url === '/students') {
-    res.write('This is the list of our students\n');
-    try {
-      const students = await countStudents(DATABASE);
-      res.end(`${students.join('\n')}`);
-    } catch (error) {
-      res.end(error.message);
-    }
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end(`This is the list of our students\nNumber of students: ${totalStudents}\nNumber of students in CS: ${totalCsStudents}. List: ${csStudentsList}\nNumber of students in SWE: ${totalSweStudents}. List: ${sweStudentsList}`);
+      }
+    });
+  } else {
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('Not Found');
   }
-  res.statusCode = 404;
-  res.end();
 });
 
-app.listen(port, hostname, () => {
-  // console.log(`Server running at http://${hostname}:${port}/`);
-});
+app.listen(1245);
 
 module.exports = app;

@@ -1,6 +1,56 @@
 const express = require('express');
 const fs = require('fs');
 
+function countStudents(filepath) {
+  return new Promise((resolve, reject) => {
+    fs.readFile(filepath, 'utf-8', (err, res) => {
+      if (err) return reject(new Error('Cannot load the database'));
+
+      const headerArray = res.split(/\r?\n|\n/);
+      const headers = headerArray[0].split(',');
+
+      const dictList = [];
+      const noHeaderArray = headerArray.slice(1);
+      for (let i = 0; i < noHeaderArray.length; i += 1) {
+        const data = noHeaderArray[i].split(',');
+        if (data.length === headers.length) {
+          const row = {};
+          for (let j = 0; j < headers.length; j += 1) {
+            row[headers[j].trim()] = data[j].trim();
+          }
+          dictList.push(row);
+        }
+      }
+
+      let countCS = 0;
+      let countSWE = 0;
+      const studentsCS = [];
+      const studentsSWE = [];
+
+      dictList.forEach((element) => {
+        if (element.field === 'CS') {
+          countCS += 1;
+          studentsCS.push(element.firstname);
+        } else if (element.field === 'SWE') {
+          countSWE += 1;
+          studentsSWE.push(element.firstname);
+        }
+      });
+
+      const countStudents = countCS + countSWE;
+
+      return resolve({
+        countStudents,
+        countCS,
+        countSWE,
+        studentsCS,
+        studentsSWE,
+      });
+    });
+  });
+}
+
+const pathToDB = process.argv[2];
 const app = express();
 const port = 1245;
 
@@ -8,29 +58,26 @@ app.get('/', (req, res) => {
   res.send('Hello Holberton School!');
 });
 
-app.get('/students', (req, res) => {
-  const database = process.argv[2];
-  let content = 'This is the list of our students\n';
-
-  fs.readFile(database, 'utf-8', (err, data) => {
-    if (err) {
-      content += 'Cannot load the database\n';
-    } else {
-      const lines = data.split('\n').filter((line) => line.trim() !== '');
-      const csStudents = lines.filter((line, index) => index > 0 && line.endsWith('CS')).map((line) => line.split(',')[0]);
-      const sweStudents = lines.filter((line, index) => index > 0 && line.endsWith('SWE')).map((line) => line.split(',')[0]);
-
-      content += `Number of students: ${lines.length - 1}\n`;
-      content += `Number of students in CS: ${csStudents.length}. List: ${csStudents.join(', ')}\n`;
-      content += `Number of students in SWE: ${sweStudents.length}. List: ${sweStudents.join(', ')}`;
-    }
-
-    res.send(content);
-  });
+app.get('/students', async (req, res) => {
+  await countStudents(pathToDB)
+    .then(({
+      countStudents,
+      countCS,
+      countSWE,
+      studentsCS,
+      studentsSWE,
+    }) => {
+      const text = 'This is the list of our students\n';
+      const total = `Number of students: ${countStudents}\n`;
+      const CS = `Number of students in CS: ${countCS}. List: ${studentsCS.toString().split(',').join(', ')}\n`;
+      const SWE = `Number of students in SWE: ${countSWE}. List: ${studentsSWE.toString().split(',').join(', ')}`;
+      res.status(200).send(text + total + CS + SWE);
+    })
+    .catch(() => {
+      res.status(404).send('Cannot load the database');
+    });
 });
 
-app.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
-});
+app.listen(port);
 
 module.exports = app;

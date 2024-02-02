@@ -48,7 +48,7 @@ function countStudents(filepath) {
       })
       .catch((error) => {
         console.error('Error reading file:', error);
-        reject(new Error('Cannot load the database'));
+        reject(new Error('Error: Cannot load the database'));
       });
   });
 }

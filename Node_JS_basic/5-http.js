@@ -2,7 +2,7 @@ const http = require('http');
 const fs = require('fs');
 
 function countStudents(filepath) {
-  return new Promise((resolve, res) => {
+  return new Promise((resolve, reject) => {
     fs.promises.readFile(filepath, { encoding: 'utf8' })
       .then((csv) => {
         const headerArray = csv.split(/\r?\n|\n/);
@@ -46,8 +46,9 @@ function countStudents(filepath) {
           studentsSWE,
         });
       })
-      .catch(() => {
-        res.end('Error: Cannot load the database');
+      .catch((error) => {
+        console.error('Error reading file:', error);
+        reject(new Error('Cannot load the database'));
       });
   });
 }
@@ -72,11 +73,12 @@ const app = http.createServer((req, res) => {
       }) => {
         res.write('This is the list of our students\n');
         res.write(`Number of students: ${countStudents}\n`);
-        res.write(`Number of students in CS: ${countCS}. List: ${studentsCS.toString().split(',').join(', ')}\n`);
-        res.write(`Number of students in SWE: ${countSWE}. List: ${studentsSWE.toString().split(',').join(', ')}`);
+        res.write(`Number of students in CS: ${countCS}. List: ${studentsCS.join(', ')}\n`);
+        res.write(`Number of students in SWE: ${countSWE}. List: ${studentsSWE.join(', ')}`);
         res.end();
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error('Error in countStudents:', error.message);
         res.end('Error: Cannot load the database');
       });
   }
